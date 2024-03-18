@@ -33,7 +33,9 @@ def generate_response(input_text):
         str: The generated response.
     """
     prompt = unidecode.unidecode(input_text)
-    return st.session_state.agent.run(prompt)
+    response = st.session_state.agent.run(prompt)
+    print('RESPONSE ---- ', response)
+    return response
 
 
 def reset_conversation():
@@ -72,6 +74,7 @@ if prompt := st.chat_input("Please ask your question"):
     st.session_state.messages.append({"role": "user", "content": prompt})
 
     response = generate_response(prompt)
+    print('RESPONSE ---- ', response)
     # Display assistant response in chat message container
     with st.chat_message("assistant"):
         display_text_with_images(response)
