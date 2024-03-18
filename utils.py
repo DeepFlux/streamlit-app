@@ -7,7 +7,7 @@ import pandas as pd
 
 
 # Optional, set the API key for OpenAI if it's not set in the environment.
-os.environ["OPENAI_API_KEY"] = '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'
+os.environ["OPENAI_API_KEY"] = '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'
 
 #### CHANGES
 host = 'df-godfather.cqpsdafhgvgc.ap-southeast-1.rds.amazonaws.com' 
