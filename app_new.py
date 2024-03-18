@@ -34,7 +34,7 @@ if "messages" not in st.session_state:
 if "agent" not in st.session_state:
     st.session_state.agent = create_agent()
 
-st.title("PivotConsult Data Extractor")
+st.title("PivotConsult Movie Data Chatbot")
 col1, col2 = st.columns([3, 1])
 with col2:
     st.button("Reset Chat", on_click=reset_conversation)
