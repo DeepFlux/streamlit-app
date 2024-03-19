@@ -5,6 +5,8 @@ import sys
 import streamlit as st
 import unidecode
 from sentry_sdk import capture_exception
+from PIL import Image
+from io import BytesIO
 
 warnings.filterwarnings("ignore")
 # Get the directory of the current file
@@ -22,6 +24,16 @@ from gen_final_output import display_text_with_images
 from utils import raw_query
 
 st.set_page_config(page_title="PivotConsult Movie")
+#Add logo on the top
+image_path = "./Consult-Logo.png"  
+image = Image.open(image_path)
+st.image(image, use_column_width=False, width=200)
+
+# Add image of Box Office Chatbot at the top
+image_path = "./videotape-with-3d-glasses-cinema-tickets.jpg"  
+image = Image.open(image_path)
+image = image.resize((int(image.width * 0.5), int(image.height * 0.5)))  # Reduce the size of the image to 50%
+st.image(image, use_column_width=True)
 
 def reset_conversation():
     st.session_state.messages = []
