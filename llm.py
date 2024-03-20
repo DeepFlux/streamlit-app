@@ -38,7 +38,7 @@ from langchain.agents import (AgentExecutor, Tool, ZeroShotAgent,
 from langchain.utilities import PythonREPL
 from langchain_experimental.tools import PythonREPLTool
 
-#open_ai_api_key = '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'
+
 movies_table = 'movie_occupancy_all_data'
 MOVIE_INFO_DATA_PROMPT=f"""
 You are a PostgreSQL expert. Given an input question, form a correct PostgreSQL query to be used to retreive data by also using relevant information from chat history
