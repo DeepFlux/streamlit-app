@@ -25,6 +25,35 @@ from utils import raw_query
 
 st.set_page_config(page_title="PivotConsult Movie")
 #Add logo on the top
+# Define the correct password
+PASSWORD = "Pivot@234"
+
+# Function to check if the entered password is correct
+def authenticate(password):
+    return password == PASSWORD
+
+# Function to reset the password input field
+def reset_password_field():
+    st.session_state.password = ""
+
+# Check if the user is authenticated
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+
+# Check if the user is authenticated
+if not st.session_state.authenticated:
+    st.title("Authentication Required")
+    password = st.text_input("Please enter the password:", type="password", value=st.session_state.get("password", ""))
+    st.session_state.password = password
+
+    if st.button("Authenticate"):
+        if authenticate(password):
+            st.session_state.authenticated = True
+            st.success("Authentication successful!")
+        else:
+            st.error("Authentication failed. Please try again.")
+
+
 image_path = "./Consult-Logo.png"  
 image = Image.open(image_path)
 st.image(image, use_column_width=False, width=200)
@@ -64,7 +93,7 @@ for message in st.session_state.messages:
 
 # Accept user input
 query_editable = st.session_state.get("query_editable", "")
-if prompt := st.chat_input("Please ask your question"):
+if st.session_state.authenticated and (prompt := st.chat_input("Please ask your question")):
     # Display user message in chat message container
     with st.chat_message("user"):
         st.markdown(prompt)
