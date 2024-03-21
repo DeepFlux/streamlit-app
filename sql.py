@@ -17,8 +17,9 @@ from utils import get_chat_openai
 #from tools.functions_tools import sql_agent_tools
 ##from database.sql_db_langchain import db
 ##from .agent_constants import CUSTOM_SUFFIX
-MOVIE_INFO_DATA_PROMPT="""
-You are a PostgreSQL expert. Given an input question, form a correct PostgreSQL query to be used to retreive data by also using relevant information from chat history.
+movies_table = 'movie_occupancy_all_data'
+MOVIE_INFO_DATA_PROMPT=f"""
+You are a PostgreSQL expert. Given an input question, form a correct PostgreSQL query to be used to retreive data by also using relevant information from chat history
 Never query for all columns from a table. You must query only the columns that are needed to answer the question. Wrap each column name in double quotes (") to denote them as delimited identifiers.
 Pay attention include a 'GROUP BY' clause when utilizing aggregation functions like SUM(),MIN(),MAX(),AVG() in queries for accurate data grouping across multiple columns.
 Pay attention to use only the column names you can see in the tables below. Be careful to not query for columns that do not exist.
@@ -26,25 +27,25 @@ Pay attention to use MIN(SHOW_DATE) as SHOW_DATE in where condition when questio
 Pay attention to Whenever requesting information on release date or first day box office, incorporate MIN(SHOW_DATE) as the method for determining the release date, use that date as the show_date
 
 Only use the following tables:
-CREATE TABLE movie_occupancy_6_months_table_1 (
+CREATE TABLE {movies_table} (
 movie_name VARCHAR(64),
-	show_date DATE,
-	crawl_date DATE,
-	city_name VARCHAR(64),
-	total_seats BIGINT,
-	occupied_seats BIGINT,
-	reserved_quota BIGINT,
-	shows BIGINT,
-	occupancy_perc BIGINT,
-	total_rev_in_cr NUMERIC,
-	avgprice NUMERIC
+show_date DATE,
+crawl_date DATE,
+city_name VARCHAR(64),
+total_seats BIGINT,
+occupied_seats BIGINT,
+reserved_quota BIGINT,
+shows BIGINT,
+occupancy_perc BIGINT,
+total_rev_in_cr NUMERIC,
+avgprice NUMERIC
 )
 
 /*
-movie_name	show_date	city_name	total_seats	occupied_seats	reserved_quota	shows	occupancy_perc	total_rev_in_cr	avgprice
-All India Rank	2024-02-23	Ahmedabad	2888	548	90	3	18	0.005	99.07
-All India Rank	2024-02-23	Bengaluru	16493	4747	674	14	28	0.058	122.09
-All India Rank	2024-02-23	Chandigarh	1624	323	136	2	19	0.004	139.25
+movie_name show_date city_name total_seats occupied_seats reserved_quota shows occupancy_perc total_rev_in_cr avgprice
+All India Rank 2024-02-23 Ahmedabad 2888 548 90 3 18 0.005 99.07
+All India Rank 2024-02-23 Bengaluru 16493 4747 674 14 28 0.058 122.09
+All India Rank 2024-02-23 Chandigarh 1624 323 136 2 19 0.004 139.25
 */
 
 Additional Information about the table and columns:
@@ -65,19 +66,27 @@ total_rev_in_cr: total advance tickets sold (in crore) of movie,
 avgprice: average ticket price
 
 use few examples to understand how the database works :
-["input" is "What are the total seats of dunki in pune on release date",
-"SQLQuery" is "SELECT sum(total_seats) from movie_occupancy_6_months_table_1 where show_date=(select min(show_date) from movie_occupancy_6_months_table_1 where movie_name='Dunki' and city_name='Pune') and movie_name='Dunki' and city_name='Pune'"
-"Answer" is "'Dunki' has total 73088 seats in pune on the date of release"]
+["input": "What are the total seats of dunki in pune on release date",
+"SQLQuery": "SELECT sum(total_seats) from {movies_table} where show_date=(select min(show_date) from {movies_table} where movie_name='Dunki' and city_name='Pune') and movie_name='Dunki' and city_name='Pune'"
+"Answer": "'Dunki' has total 73088 seats in pune on the date of release"],
+["input":"What was day 1 collection of Animal?",
+"SQLQuery": "SELECT sum(total_rev_in_cr) from {movies_table} where show_date=(select min(show_date) from {movies_table} where movie_name='Animal') and movie_name='Animal'",
+"Answer": "'Animal' day 1 collection was 43 Cr"],
+["input":"What was average ticket price of Dunki?",
+"SQLQuery": "SELECT avg(avgprice) FROM {movies_table} WHERE movie_name='Dunki'",
+"Answer": "'Dunki' average ticket price was 308 Rs "]
+
 
 Relevant pieces of previous conversation:
-{history}
+{str('{history}')}
 (You do not need to use these pieces of information if not relevant)
+(You return the sql statement that is starting with 'SELECT')
+(You do not return sql statement '[SQL: AI:')
 
 
-Question: {input}
+Question: {str('{input}')}
 
 """
-
 
 
 def get_sql_toolkit(tool_llm_name: str):
@@ -130,13 +139,13 @@ def create_agent(
     llm_agent = get_agent_llm(agent_llm_name)
     toolkit = get_sql_toolkit(tool_llm_name)
     memory = ConversationBufferMemory(memory_key="history", input_key="input")
-    custom_suffix = (
-    "Begin! When looking for data, do not write a SQL query. "
-    "Pass the relevant portion of the request directly to the Data tool in its entirety."
-    "\n\n"
-    "Request: {input}\n"
-    "{agent_scratchpad}"
-	)
+    custom_suffix =  (
+        "Begin! When looking for data, do not write a SQL query. "
+        "Pass the relevant portion of the request directly to the Data tool in its entirety."
+        "\n\n"
+        "Request: {input}\n"
+        "{agent_scratchpad}"
+    )
     agent = create_sql_agent(
         llm=llm_agent,
         toolkit=toolkit,
