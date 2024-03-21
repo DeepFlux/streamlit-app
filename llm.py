@@ -37,9 +37,14 @@ from langchain.agents import (AgentExecutor, Tool, ZeroShotAgent,
                               initialize_agent, load_tools)
 from langchain.utilities import PythonREPL
 from langchain_experimental.tools import PythonREPLTool
+import json
 
-open_ai_api_key = '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'
-movies_table = 'movie_occupancy_all_data'
+with open('config.json', 'r') as f:
+    # Load the JSON data
+    requirement_details = json.load(f)
+
+open_ai_api_key = requirement_details['open_ai_api_key']
+movies_table = requirement_details['table_name']
 MOVIE_INFO_DATA_PROMPT=f"""
 You are a PostgreSQL expert. Given an input question, form a correct PostgreSQL query to be used to retreive data by also using relevant information from chat history
 Never query for all columns from a table. You must query only the columns that are needed to answer the question. Wrap each column name in double quotes (") to denote them as delimited identifiers.
@@ -112,7 +117,7 @@ Question: {str('{input}')}
 """
 
 #### Changes
-DATABASE_URI="postgresql://jupyterhub:dligv37940ptou@df-godfather.cqpsdafhgvgc.ap-southeast-1.rds.amazonaws.com:3282/movies_launch"
+DATABASE_URI=requirement_details['db_details']['db_uri']
 memory = ConversationBufferMemory(input_key='input', memory_key="history")
 llm = ChatOpenAI(openai_api_key=open_ai_api_key,temperature=0)
 PROMPT_X=PromptTemplate.from_template(MOVIE_INFO_DATA_PROMPT)
@@ -139,9 +144,9 @@ def create_agent():
 	# try:
 	
 	llm = OpenAI(temperature=0.0, openai_api_key=open_ai_api_key)
-	DATABASE_URI="postgresql://jupyterhub:dligv37940ptou@df-godfather.cqpsdafhgvgc.ap-southeast-1.rds.amazonaws.com:3282/movies_launch"
+	DATABASE_URI=requirement_details['db_details']['db_uri']
 
-	db1 = SQLDatabase.from_uri(DATABASE_URI, include_tables=['movie_occupancy_6_months_table_1'])
+	db1 = SQLDatabase.from_uri(DATABASE_URI, include_tables=[movies_table])
 
 	context = db1.get_context()
 	orders_table_info=context["table_info"]
