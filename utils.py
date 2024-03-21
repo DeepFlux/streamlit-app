@@ -3,18 +3,20 @@ import os
 from sqlalchemy import create_engine, text
 from constants import chat_openai_model_kwargs, langchain_chat_kwargs
 from sentry_sdk import capture_exception
-import pandas as pd
+import pandas as pd, json
 
-
+with open('config.json', 'r') as f:
+    # Load the JSON data
+    requirement_details = json.load(f)
 # Optional, set the API key for OpenAI if it's not set in the environment.
-os.environ["OPENAI_API_KEY"] = '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'
+os.environ["OPENAI_API_KEY"] = requirement_details['open_ai_api_key']
 
 #### CHANGES
-host = 'df-godfather.cqpsdafhgvgc.ap-southeast-1.rds.amazonaws.com' 
-database = 'movies_launch' 
-user = 'jupyterhub'   
-password = 'dligv37940ptou'  
-port = '3282'
+host = requirement_details['db_details']['host'] 
+database = requirement_details['db_details']['database'] 
+user = requirement_details['db_details']['user']   
+password = requirement_details['db_details']['password']  
+port = requirement_details['db_details']['port']
 db_uri_formatter = "postgresql+psycopg2://{user}:{password}@{host}:{port}/{database}"
 db_uri = db_uri_formatter.format(
             user=user, password=password, host=host, port=port,

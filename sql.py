@@ -17,7 +17,12 @@ from utils import get_chat_openai
 #from tools.functions_tools import sql_agent_tools
 ##from database.sql_db_langchain import db
 ##from .agent_constants import CUSTOM_SUFFIX
-movies_table = 'movie_occupancy_all_data'
+import json
+with open('config.json', 'r') as f:
+    # Load the JSON data
+    requirement_details = json.load(f)
+
+movies_table = requirement_details['table_name']
 MOVIE_INFO_DATA_PROMPT=f"""
 You are a PostgreSQL expert. Given an input question, form a correct PostgreSQL query to be used to retreive data by also using relevant information from chat history
 Never query for all columns from a table. You must query only the columns that are needed to answer the question. Wrap each column name in double quotes (") to denote them as delimited identifiers.
@@ -100,8 +105,8 @@ def get_sql_toolkit(tool_llm_name: str):
         SQLDatabaseToolkit: The SQL toolkit object.
     """
     llm_tool = get_chat_openai(model_name=tool_llm_name)
-    DATABASE_URI="postgresql://jupyterhub:dligv37940ptou@df-godfather.cqpsdafhgvgc.ap-southeast-1.rds.amazonaws.com:3282/movies_launch"
-    db = SQLDatabase.from_uri(DATABASE_URI, include_tables=['movie_occupancy_6_months_table_1'])
+    DATABASE_URI=requirement_details['db_details']['db_uri']
+    db = SQLDatabase.from_uri(DATABASE_URI, include_tables=movies_table)
     toolkit = SQLDatabaseToolkit(db=db, llm=llm_tool)
     return toolkit
 
