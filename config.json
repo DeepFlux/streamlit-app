@@ -1,6 +1,6 @@
 {
 "open_ai_api_key": "your-api-key",
-"table_name" : "movie_occupancy_all_data",
+"table_name" : "movie_occupancy_all_correct_data",
 "db_details": {
         "host":"df-godfather.cqpsdafhgvgc.ap-southeast-1.rds.amazonaws.com",
         "database": "movies_launch",
