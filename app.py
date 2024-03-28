@@ -103,7 +103,7 @@ def change_query():
 # Accept user input
 # query_editable = st.session_state.get("query_editable", "")
 # if prompt := st.chat_input("Please ask your question"):
-if st.session_state.authenticated and (prompt := st.chat_input("Please ask your question")):
+if st.session_state.authenticated and (prompt := st.chat_input("Please ask your question like What is Day 1 Revenue of Animal")):
     # Display user message in chat message container
     with st.chat_message("user"):
         st.markdown(prompt)
@@ -115,7 +115,8 @@ if st.session_state.authenticated and (prompt := st.chat_input("Please ask your 
     query = generate_query(result_query)
     st.session_state.updated_query = query
 # Display the generated SQL query
-st.text_area("Generated SQL Query:", key="updated_query", value=st.session_state.updated_query, on_change=change_query, height = 200)
+if st.session_state.authenticated and prompt:
+    st.text_area("Generated SQL Query:", key="updated_query", value=st.session_state.updated_query, on_change=change_query, height=200)
 st.session_state.updated_query
 
 # Execute the SQL query when the "Run Query" button is clicked
@@ -138,4 +139,3 @@ if st.button("Run Query"):
                 st.error(f"Error executing the query: {e}")
     else:
         st.error("Please enter a valid SQL query before running.")
-

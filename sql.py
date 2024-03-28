@@ -30,6 +30,8 @@ Pay attention include a 'GROUP BY' clause when utilizing aggregation functions l
 Pay attention to use only the column names you can see in the tables below. Be careful to not query for columns that do not exist.
 Pay attention to use MIN(SHOW_DATE) as SHOW_DATE in where condition when question asks for "release date"
 Pay attention to Whenever requesting information on release date or first day box office, incorporate MIN(SHOW_DATE) as the method for determining the release date, use that date as the show_date
+Pay attention to Whenever requesting information on weekend, incorporate MIN(SHOW_DATE) + interval '2 days' as the method for determining the weekend date, use that date as the show_date
+
 
 Only use the following tables:
 CREATE TABLE {movies_table} (
@@ -39,18 +41,18 @@ crawl_date DATE,
 city_name VARCHAR(64),
 total_seats BIGINT,
 occupied_seats BIGINT,
-reserved_quota BIGINT,
 shows BIGINT,
 occupancy_perc BIGINT,
 total_rev_in_cr NUMERIC,
+category_rev NUMERIC,
 avgprice NUMERIC
 )
 
 /*
-movie_name show_date city_name total_seats occupied_seats reserved_quota shows occupancy_perc total_rev_in_cr avgprice
-All India Rank 2024-02-23 Ahmedabad 2888 548 90 3 18 0.005 99.07
-All India Rank 2024-02-23 Bengaluru 16493 4747 674 14 28 0.058 122.09
-All India Rank 2024-02-23 Chandigarh 1624 323 136 2 19 0.004 139.25
+movie_name show_date city_name total_seats occupied_seats shows occupancy_perc total_rev_in_cr category_rev avgprice
+"12th Fail" "2023-10-28"    "2023-10-28"    "Ahmedabad" 10629   1548    52  14  0.031   314950  203.46
+"12th Fail" "2023-10-28"    "2023-10-28"    "Amritsar"  1285    216 11  16  0.005   47550   220.14
+"12th Fail" "2023-10-28"    "2023-10-28"    "Bengaluru" 9445    3680    56  38  0.085   848460  230.56
 */
 
 Additional Information about the table and columns:
@@ -64,22 +66,45 @@ show_date: Date of the show,
 city_name: name of an indian city,
 total_seats: total seats given to the movie in that city,
 occupied_seats: total number of occupied seats of the movie,
-reserved_quota: total number of seats reserved ny the theatre,
 shows: total shows of the movie,
 occupancy_perc: percentage of seats occupied,
 total_rev_in_cr: total advance tickets sold (in crore) of movie,
+category_rev: revenue of that category of the movie,
 avgprice: average ticket price
 
 use few examples to understand how the database works :
 ["input": "What are the total seats of dunki in pune on release date",
 "SQLQuery": "SELECT sum(total_seats) from {movies_table} where show_date=(select min(show_date) from {movies_table} where movie_name='Dunki' and city_name='Pune') and movie_name='Dunki' and city_name='Pune'"
-"Answer": "'Dunki' has total 73088 seats in pune on the date of release"],
+],
 ["input":"What was day 1 collection of Animal?",
 "SQLQuery": "SELECT sum(total_rev_in_cr) from {movies_table} where show_date=(select min(show_date) from {movies_table} where movie_name='Animal') and movie_name='Animal'",
-"Answer": "'Animal' day 1 collection was 43 Cr"],
+],
 ["input":"What was average ticket price of Dunki?",
 "SQLQuery": "SELECT avg(avgprice) FROM {movies_table} WHERE movie_name='Dunki'",
-"Answer": "'Dunki' average ticket price was 308 Rs "]
+],
+["input":"What is Animal advance day 2 citywise?",
+"SQLQuery": "SELECT city_name, sum(total_rev_in_cr) FROM {movies_table} WHERE show_date = (SELECT MIN(show_date) FROM {movies_table} WHERE movie_name='Animal')+ interval '1 day' and movie_name = 'Animal' GROUP BY city_name",
+],
+["input":"What is Animal advance day 2?",
+"SQLQuery": "SELECT city_name, sum(total_rev_in_cr) FROM {movies_table} WHERE show_date = (SELECT MIN(show_date) FROM {movies_table} WHERE movie_name='Animal')+ interval '1 day' and movie_name = 'Animal'",
+],
+["input":"What is Animal occupancy percentage day 1?",
+"SQLQuery": "SELECT city_name, sum(occupancy_perc) FROM {movies_table} WHERE show_date = (SELECT MIN(show_date) FROM {movies_table} WHERE movie_name='Animal')+ interval '1 day' and movie_name = 'Animal'",
+],
+["input":"What is the total advance Booking for the weekend for Animal?",
+"SQLQuery": "SELECT sum(total_rev_in_cr) FROM {movies_table} WHERE show_date >= (SELECT MIN(show_date) FROM {movies_table} WHERE movie_name = 'Animal') AND show_date <= (SELECT MIN(show_date) FROM {movies_table} WHERE movie_name = 'Animal') + interval '2 days'AND movie_name = 'Animal'",
+],
+["input":"What is the total occupied seats for the weekend for Animal?",
+"SQLQuery": "SELECT sum(occupied_seats) FROM {movies_table} WHERE show_date >= (SELECT MIN(show_date) FROM {movies_table} WHERE movie_name = 'Animal') AND show_date <= (SELECT MIN(show_date) FROM {movies_table} WHERE movie_name = 'Animal') + interval '2 days' AND movie_name = 'Animal'",
+],
+["input":"what is the average occupied seats for day 1 for Animal?",
+"SQLQuery": "SELECT AVG(occupied_seats) FROM {movies_table} WHERE show_date = (SELECT MIN(show_date) FROM {movies_table} WHERE movie_name = 'Animal') AND movie_name = 'Animal'",
+],
+["input":"What is the highest advance booking movie?",
+"SQLQuery": "SELECT movie_name, MAX(total_rev_in_cr) as total_advance_booking FROM {movies_table} GROUP BY movie_name,show_date ORDER BY total_advance_booking DESC limit 1",
+],
+
+
 
 
 Relevant pieces of previous conversation:

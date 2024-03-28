@@ -1,16 +1,11 @@
-os
 pandas
 streamlit
 unidecode
 sentry_sdk
-PIL
-io
-json
 langchain
 sqlalchemy
 langchain_community
 langchain_core
 langchain_openai
-time
 langchain_experimental
-
+psycopg2
