@@ -136,7 +136,7 @@ use few examples to understand how the database works :
 "SQLQuery":"SELECT distinct a.movie_name, b.release_day, SUM(a.total_rev_in_cr) as total_revenue FROM {movies_table}  as a JOIN (select MIN(show_date) as release_day, movie_name FROM {movies_table} group by movie_name) as b ON a.movie_name=b.movie_name where a.show_date= b.release_day GROUP BY a.movie_name, b.release_day ORDER BY total_revenue DESC;"]
  
  
- 
+
 Relevant pieces of previous conversation:
 {str('{history}')}
 (You do not need to use these pieces of information if not relevant)
