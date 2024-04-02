@@ -63,6 +63,15 @@ image_path = "./videotape-with-3d-glasses-cinema-tickets.jpg"
 image = Image.open(image_path)
 image = image.resize((int(image.width * 0.5), int(image.height * 0.5)))  # Reduce the size of the image to 50%
 st.image(image, use_column_width=True)
+# Create a Streamlit sidebar
+st.sidebar.title("App Instructions")
+
+# Add directions on how to use the app
+st.sidebar.markdown("1. Enter your password to authenticate.")
+st.sidebar.markdown("2. Use the chat interface to interact with the chatbot.")
+st.sidebar.markdown("3. Ask questions on Revenue, Advance Collection, Occupancy Percentage, Occupied Seats, Average Ticket Price and Others.")
+st.sidebar.markdown("4. Once the Query is generated, modify the query if needed and hit Run Query button.")
+
 
 def reset_conversation():
     st.session_state.messages = []

@@ -23,16 +23,17 @@ with open('config.json', 'r') as f:
     requirement_details = json.load(f)
 
 movies_table = requirement_details['table_name']
-MOVIE_INFO_DATA_PROMPT=f"""
+MOVIE_INFO_DATA_PROMPT="""
 You are a PostgreSQL expert. Given an input question, form a correct PostgreSQL query to be used to retreive data by also using relevant information from chat history
 Never query for all columns from a table. You must query only the columns that are needed to answer the question. Wrap each column name in double quotes (") to denote them as delimited identifiers.
 Pay attention include a 'GROUP BY' clause when utilizing aggregation functions like SUM(),MIN(),MAX(),AVG() in queries for accurate data grouping across multiple columns.
 Pay attention to use only the column names you can see in the tables below. Be careful to not query for columns that do not exist.
 Pay attention to use MIN(SHOW_DATE) as SHOW_DATE in where condition when question asks for "release date"
 Pay attention to Whenever requesting information on release date or first day box office, incorporate MIN(SHOW_DATE) as the method for determining the release date, use that date as the show_date
-Pay attention to Whenever requesting information on weekend, incorporate MIN(SHOW_DATE) + interval '2 days' as the method for determining the weekend date, use that date as the show_date
-
-
+Pay attention to Whenever requesting information on first weekend, incorporate MIN(SHOW_DATE) + interval '2 days' as the method for determining the weekend date, use that date as the show_date
+Pay attention to use functions like EXTRACT(ISODOW FROM SHOW_DATE) whenever asked for a particular day of the week
+Pay attention DO NOT EVER USE aggregation functions like SUM() and AVG() in queries on "occupancy_perc" column, instead use SUM(OCCUPIED_SEATS)/SUM(TOTAL_SEATS) toc calculate average occupancy percentage
+ 
 Only use the following tables:
 CREATE TABLE {movies_table} (
 movie_name VARCHAR(64),
@@ -47,20 +48,20 @@ total_rev_in_cr NUMERIC,
 category_rev NUMERIC,
 avgprice NUMERIC
 )
-
+ 
 /*
 movie_name show_date city_name total_seats occupied_seats shows occupancy_perc total_rev_in_cr category_rev avgprice
 "12th Fail" "2023-10-28"    "2023-10-28"    "Ahmedabad" 10629   1548    52  14  0.031   314950  203.46
 "12th Fail" "2023-10-28"    "2023-10-28"    "Amritsar"  1285    216 11  16  0.005   47550   220.14
 "12th Fail" "2023-10-28"    "2023-10-28"    "Bengaluru" 9445    3680    56  38  0.085   848460  230.56
 */
-
+ 
 Additional Information about the table and columns:
 This table contains movie's occupancy data with respect to every city.
 It shows how much are the shows for that movie occupied and total seats on theaters for the particular movie
 Each movie has multiple show dates and cities. use group by clause if all of them are not mentioned in the query
 Following are the columns and their description:
-
+ 
 movie_name VARCHAR(64),
 show_date: Date of the show,
 city_name: name of an indian city,
@@ -71,7 +72,7 @@ occupancy_perc: percentage of seats occupied,
 total_rev_in_cr: total advance tickets sold (in crore) of movie,
 category_rev: revenue of that category of the movie,
 avgprice: average ticket price
-
+ 
 use few examples to understand how the database works :
 ["input": "What are the total seats of dunki in pune on release date",
 "SQLQuery": "SELECT sum(total_seats) from {movies_table} where show_date=(select min(show_date) from {movies_table} where movie_name='Dunki' and city_name='Pune') and movie_name='Dunki' and city_name='Pune'"
@@ -80,7 +81,7 @@ use few examples to understand how the database works :
 "SQLQuery": "SELECT sum(total_rev_in_cr) from {movies_table} where show_date=(select min(show_date) from {movies_table} where movie_name='Animal') and movie_name='Animal'",
 ],
 ["input":"What was average ticket price of Dunki?",
-"SQLQuery": "SELECT avg(avgprice) FROM {movies_table} WHERE movie_name='Dunki'",
+"SQLQuery": "SELECT (sum(occupied_seats*avgprice)/sum(occupied_seats)) FROM {movies_table} WHERE movie_name='Dunki'",
 ],
 ["input":"What is Animal advance day 2 citywise?",
 "SQLQuery": "SELECT city_name, sum(total_rev_in_cr) FROM {movies_table} WHERE show_date = (SELECT MIN(show_date) FROM {movies_table} WHERE movie_name='Animal')+ interval '1 day' and movie_name = 'Animal' GROUP BY city_name",
@@ -97,25 +98,33 @@ use few examples to understand how the database works :
 ["input":"What is the total occupied seats for the weekend for Animal?",
 "SQLQuery": "SELECT sum(occupied_seats) FROM {movies_table} WHERE show_date >= (SELECT MIN(show_date) FROM {movies_table} WHERE movie_name = 'Animal') AND show_date <= (SELECT MIN(show_date) FROM {movies_table} WHERE movie_name = 'Animal') + interval '2 days' AND movie_name = 'Animal'",
 ],
-["input":"what is the average occupied seats for day 1 for Animal?",
-"SQLQuery": "SELECT AVG(occupied_seats) FROM {movies_table} WHERE show_date = (SELECT MIN(show_date) FROM {movies_table} WHERE movie_name = 'Animal') AND movie_name = 'Animal'",
+["input":"what is the occupied seats for day 1 for Animal?",
+"SQLQuery": "SELECT SUM(occupied_seats) FROM {movies_table} WHERE show_date = (SELECT MIN(show_date) FROM {movies_table} WHERE movie_name = 'Animal') AND movie_name = 'Animal'",
 ],
 ["input":"What is the highest advance booking movie?",
 "SQLQuery": "SELECT movie_name, MAX(total_rev_in_cr) as total_advance_booking FROM {movies_table} GROUP BY movie_name,show_date ORDER BY total_advance_booking DESC limit 1",
 ],
-
-
-
-
+["input":"What is the average occupancy percentage of Animal on Day 1?",
+"SQLQuery": "SELECT sum(occupied_seats)*100/sum(total_seats) as occupied_perc from {movies_table} where show_date=(select min(show_date) from {movies_table} where movie_name='Animal') and movie_name='Animal'",
+],
+["input":"What is avg occupancy percentage by movies over last weekend?",
+"SQLQuery":"SELECT DISTINCT MOVIE_NAME,SUM(OCCUPIED_SEATS) / SUM(TOTAL_SEATS) AS AVG_OCCUPANCY FROM {movies_table} WHERE SHOW_DATE >=(SELECT DISTINCT MAX(SHOW_DATE) FROM {movies_table} WHERE EXTRACT(ISODOW FROM SHOW_DATE) = 5) AND SHOW_DATE <=(SELECT DISTINCT MAX(SHOW_DATE) FROM {movies_table} WHERE EXTRACT(ISODOW FROM SHOW_DATE) = 7) GROUP BY MOVIE_NAME"],
+["input":"which movie made the most revenue yesterday?",
+"SQLQuery":"SELECT movie_name, sum(total_rev_in_cr) as total_revenue FROM movie_occupancy_all_data WHERE show_date = current_date - interval '1 day' GROUP BY movie_name ORDER BY total_revenue DESC LIMIT 1;"],
+["input":"which movies made the most advance sale revenue on their release day?",
+"SQLQuery":"SELECT distinct a.movie_name, b.release_day, SUM(a.total_rev_in_cr) as total_revenue FROM {movies_table}  as a JOIN (select MIN(show_date) as release_day, movie_name FROM {movies_table} group by movie_name) as b ON a.movie_name=b.movie_name where a.show_date= b.release_day GROUP BY a.movie_name, b.release_day ORDER BY total_revenue DESC;"]
+ 
+ 
+ 
 Relevant pieces of previous conversation:
 {str('{history}')}
 (You do not need to use these pieces of information if not relevant)
 (You return the sql statement that is starting with 'SELECT')
 (You do not return sql statement '[SQL: AI:')
-
-
+ 
+ 
 Question: {str('{input}')}
-
+ 
 """
 
 
