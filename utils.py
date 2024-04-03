@@ -48,8 +48,10 @@ def raw_query(query, as_dict=False, as_df=False):
             output_df = pd.read_sql(query, con=_db_engine)
             output_df = output_df.fillna('')
             final_output = output_df
+            print('FINAL OUTPUT --- ', final_output.shape)
         except Exception as err_msg:
             print('---- Error in DB Query ----')
+            return 'There may be issue in the query, data not found, please recheck!'
             print(err_msg)
             capture_exception(err_msg)
 
@@ -62,8 +64,11 @@ def raw_query(query, as_dict=False, as_df=False):
                     final_output = [row.items() for row in results]
                 else:
                     final_output = True
+                    print('FINAL OUTPUT --- ', final_output.shape)
                 trans.commit()
+
             except Exception as err_msg:
+                return 'There may be issue in the query, data not found, please recheck!'
                 trans.rollback()
                 print('---- Error in DB Query ----')
                 print(traceback.format_exc())
@@ -71,7 +76,7 @@ def raw_query(query, as_dict=False, as_df=False):
                 capture_exception(err_msg)
     else:
         raise Exception('Select the output format')
-    print('FINAL OUTPUT --- ', final_output.shape)
+    
     return final_output
 
 ####

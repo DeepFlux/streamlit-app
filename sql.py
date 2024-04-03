@@ -123,6 +123,7 @@ use few examples to understand how the database works :
  
 Relevant pieces of previous conversation:
 {str('{history}')}
+(You need to calculate occupancy percentage, use sum(occupied_seats)/sum(total_seats) as occupancy_perc)
 (You do not need to use these pieces of information if not relevant)
 (You return the sql statement that is starting with 'SELECT')
 (You do not return sql statement '[SQL: AI:')
