@@ -136,8 +136,7 @@ if st.button("Run Query"):
         with st.spinner("Running query..."):
             try:
                 print('Calling raw_query()')
-                result_data = raw_query(run_query, as_df=True)  # Execute the query and return as DataFrame
-                # print(result_data.shape)
+                result_data = raw_query(run_query, as_df=True)  # Execute the query and return as DataFrame#print(result_data.shape)
                 with st.chat_message("assistant"):
                     if isinstance(result_data, pd.DataFrame):
                         st.table(result_data)  # Display the result as a table
