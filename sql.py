@@ -36,6 +36,7 @@ Release date is the day on which movie is released. In the data every movie has 
 First weekend is the first 3 days of from the release of the movie.
  
 Pay attention to use functions like EXTRACT(ISODOW FROM SHOW_DATE) whenever asked for a particular day of the week
+Pay attention to not use aggregation functions like SUM(), AVG() within the MAX() or MIN() function, instead retrieve the required data first and then do the MAX() or MIN() over that
  
  
  
@@ -118,11 +119,15 @@ use few examples to understand how the database works :
 ["input":"which movies made the most advance sale revenue on their release day?",
 "SQLQuery":"SELECT distinct movie_name,SUM(total_rev_in_cr) OVER (PARTITION BY movie_name, show_date) AS total_revenue FROM {movies_table} WHERE show_date=release_date ORDER BY total_revenue desc;"
 ]
+["input":"what is the highest occupancy percentage movie?",
+"SQLQuery":"SELECT movie_name, MAX(occupancy_percentage)*100 AS highest_occupancy_percentage FROM (SELECT movie_name, SUM(occupied_seats) * 100 / SUM(total_seats) AS occupancy_percentage FROM {movies_table} GROUP BY movie_name) as a GROUP BY movie_name ORDER BY highest_occupancy_percentage DESC LIMIT 1"
+]
  
  
  
 Relevant pieces of previous conversation:
 {str('{history}')}
+(You do not use aggregation functions like SUM(), AVG() within the MAX() or MIN() function, instead retrieve the required data first and then do the MAX() or MIN() over that)
 (You need to calculate occupancy percentage, use sum(occupied_seats)/sum(total_seats) as occupancy_perc)
 (You do not need to use these pieces of information if not relevant)
 (You return the sql statement that is starting with 'SELECT')
